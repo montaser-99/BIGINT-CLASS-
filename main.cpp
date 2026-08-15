@@ -102,14 +102,14 @@ public:
 
             int comparison = compareMagnitude(other);
 
-            // Same magnitude → result is zero
+            
             if (comparison == 0) {
 
                 number = "0";
                 isNegative = false;
             }
 
-            // |this| > |other|
+            
             else if (comparison > 0) {
 
                 string result = "";
@@ -177,6 +177,7 @@ public:
                     i--;
                     j--;
                 }
+
                 number = result;
                 isNegative = other.isNegative;
             }
@@ -187,10 +188,116 @@ public:
         return *this;
     }
 
-    BigInt& operator-=(const BigInt& other) {
-        // TODO
-        return *this;
-    }
+   
+        BigInt& operator-=(const BigInt & other) {
+
+            
+            if (isNegative != other.isNegative) {
+
+                BigInt temp = other;
+
+                
+                temp.isNegative = !temp.isNegative;
+
+                *this += temp;
+
+                return *this;
+            }
+
+            
+            int comparison = compareMagnitude(other);
+
+            
+            if (comparison == 0) {
+
+                number = "0";
+                isNegative = false;
+
+                return *this;
+            }
+
+            
+            else if (comparison > 0) {
+
+                string result = "";
+                int borrow = 0;
+
+                int i = number.length() - 1;
+                int j = other.number.length() - 1;
+
+                while (i >= 0) {
+
+                    int digit1 = number[i] - '0';
+                    int digit2 = 0;
+
+                    if (j >= 0) {
+                        digit2 = other.number[j] - '0';
+                    }
+
+                    int difference = digit1 - digit2 - borrow;
+
+                    if (difference < 0) {
+                        difference += 10;
+                        borrow = 1;
+                    }
+                    else {
+                        borrow = 0;
+                    }
+
+                    result = char('0' + difference) + result;
+
+                    i--;
+                    j--;
+                }
+
+                number = result;
+            }
+
+            
+            else {
+
+                string result = "";
+                int borrow = 0;
+
+                int i = other.number.length() - 1;
+                int j = number.length() - 1;
+
+                while (i >= 0) {
+
+                    int digit1 = other.number[i] - '0';
+                    int digit2 = 0;
+
+                    if (j >= 0) {
+                        digit2 = number[j] - '0';
+                    }
+
+                    int difference = digit1 - digit2 - borrow;
+
+                    if (difference < 0) {
+                        difference += 10;
+                        borrow = 1;
+                    }
+                    else {
+                        borrow = 0;
+                    }
+
+                    result = char('0' + difference) + result;
+
+                    i--;
+                    j--;
+                }
+
+                number = result;
+
+                
+                isNegative = !isNegative;
+            }
+
+            removeLeadingZeros();
+
+            return *this;
+        }
+       
 
 
     // =====================================================
@@ -270,13 +377,15 @@ public:
 
 BigInt operator+(BigInt lhs, const BigInt& rhs) {
     BigInt result;
-    // TODO
+    lhs += rhs;
+    result = lhs;
     return result;
 }
 
 BigInt operator-(BigInt lhs, const BigInt& rhs) {
     BigInt result;
-    // TODO
+    lhs -= rhs;
+    result = lhs;
     return result;
 }
 
