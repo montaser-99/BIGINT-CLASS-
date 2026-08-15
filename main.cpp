@@ -190,12 +190,12 @@ public:
     }
 
     BigInt& operator-=(const BigInt& other) {
-        // Different signs: subtraction becomes addition
+       
         if (isNegative != other.isNegative) {
 
             BigInt temp = other;
 
-            // Flip other's sign
+            
             temp.isNegative = !temp.isNegative;
 
             *this += temp;
@@ -203,10 +203,10 @@ public:
             return *this;
         }
 
-        // Same signs: subtract the magnitudes
+        
         int comparison = compareMagnitude(other);
 
-        // Equal magnitudes -> result is zero
+       
         if (comparison == 0) {
 
             number = "0";
@@ -215,7 +215,7 @@ public:
             return *this;
         }
 
-        // |this| > |other|
+      
         else if (comparison > 0) {
 
             string result = "";
@@ -252,7 +252,7 @@ public:
             number = result;
         }
 
-        // |other| > |this|
+        
         else {
 
             string result = "";
@@ -288,7 +288,7 @@ public:
 
             number = result;
 
-            // Result gets the opposite sign
+           
             isNegative = !isNegative;
         }
 
