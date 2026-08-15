@@ -64,7 +64,6 @@ public:
     // =====================================================
 
     BigInt& operator+=(const BigInt& other) {
-        // Same signs: add the magnitudes
         if (isNegative == other.isNegative) {
 
             string result = "";
@@ -99,19 +98,18 @@ public:
             number = result;
         }
 
-        // Different signs: subtract the smaller magnitude
         else {
 
             int comparison = compareMagnitude(other);
 
-            // Equal magnitudes -> result is zero
+            
             if (comparison == 0) {
 
                 number = "0";
                 isNegative = false;
             }
 
-            // |this| > |other|
+            
             else if (comparison > 0) {
 
                 string result = "";
@@ -147,8 +145,6 @@ public:
 
                 number = result;
             }
-
-            // |other| > |this|
             else {
 
                 string result = "";
@@ -184,7 +180,7 @@ public:
 
                 number = result;
 
-                // Result gets the sign of the larger magnitude
+                
                 isNegative = other.isNegative;
             }
         }
