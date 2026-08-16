@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <stdexcept>
 
 using namespace std;
 
@@ -62,6 +63,10 @@ class BigInt
     }
 
 public:
+    // =====================================================
+    // Constructors
+    // =====================================================
+
     BigInt()
     {
         number = "0";
@@ -73,7 +78,16 @@ public:
         if (value < 0)
         {
             isNegative = true;
-            number = to_string(value * -1);
+
+            // Handle INT64_MIN safely
+            if (value == INT64_MIN)
+            {
+                number = "9223372036854775808";
+            }
+            else
+            {
+                number = to_string(-value);
+            }
         }
         else
         {
@@ -84,6 +98,13 @@ public:
 
     BigInt(const string& str)
     {
+        if (str.empty())
+        {
+            number = "0";
+            isNegative = false;
+            return;
+        }
+
         if (str[0] == '-')
         {
             isNegative = true;
@@ -128,14 +149,25 @@ public:
     BigInt operator-() const
     {
         BigInt result;
-        // TODO
+
+        result.number = number;
+        result.isNegative = isNegative;
+
+        if (result.number != "0")
+        {
+            result.isNegative = !result.isNegative;
+        }
+
         return result;
     }
 
     BigInt operator+() const
     {
         BigInt result;
-        // TODO
+
+        result.number = number;
+        result.isNegative = isNegative;
+
         return result;
     }
 
@@ -150,8 +182,8 @@ public:
             string result = "";
             int carry = 0;
 
-            int i = number.length() - 1;
-            int j = other.number.length() - 1;
+            int i = static_cast<int>(number.length()) - 1;
+            int j = static_cast<int>(other.number.length()) - 1;
 
             while (i >= 0 || j >= 0 || carry != 0)
             {
@@ -194,8 +226,8 @@ public:
                 string result = "";
                 int borrow = 0;
 
-                int i = number.length() - 1;
-                int j = other.number.length() - 1;
+                int i = static_cast<int>(number.length()) - 1;
+                int j = static_cast<int>(other.number.length()) - 1;
 
                 while (i >= 0)
                 {
@@ -232,8 +264,8 @@ public:
                 string result = "";
                 int borrow = 0;
 
-                int i = other.number.length() - 1;
-                int j = number.length() - 1;
+                int i = static_cast<int>(other.number.length()) - 1;
+                int j = static_cast<int>(number.length()) - 1;
 
                 while (i >= 0)
                 {
@@ -264,12 +296,12 @@ public:
                 }
 
                 number = result;
-
                 isNegative = other.isNegative;
             }
         }
 
         removeLeadingZeros();
+
         return *this;
     }
 
@@ -300,8 +332,8 @@ public:
             string result = "";
             int borrow = 0;
 
-            int i = number.length() - 1;
-            int j = other.number.length() - 1;
+            int i = static_cast<int>(number.length()) - 1;
+            int j = static_cast<int>(other.number.length()) - 1;
 
             while (i >= 0)
             {
@@ -338,8 +370,8 @@ public:
             string result = "";
             int borrow = 0;
 
-            int i = other.number.length() - 1;
-            int j = number.length() - 1;
+            int i = static_cast<int>(other.number.length()) - 1;
+            int j = static_cast<int>(number.length()) - 1;
 
             while (i >= 0)
             {
@@ -370,7 +402,6 @@ public:
             }
 
             number = result;
-
             isNegative = !isNegative;
         }
 
@@ -389,11 +420,12 @@ public:
         {
             number = "0";
             isNegative = false;
+
             return *this;
         }
 
-        int n = number.size();
-        int m = other.number.size();
+        int n = static_cast<int>(number.size());
+        int m = static_cast<int>(other.number.size());
 
         vector<int> result(n + m, 0);
 
@@ -436,6 +468,8 @@ public:
             isNegative = false;
         }
 
+        removeLeadingZeros();
+
         return *this;
     }
 
@@ -445,13 +479,120 @@ public:
 
     BigInt& operator/=(const BigInt& other)
     {
-        // TODO
+        if (other.number == "0")
+        {
+            throw runtime_error("Division by zero");
+        }
+
+        if (number == "0")
+        {
+            return *this;
+        }
+
+        bool resultNegative = (isNegative != other.isNegative);
+
+        BigInt dividend(*this);
+        BigInt divisor(other);
+
+        dividend.isNegative = false;
+        divisor.isNegative = false;
+
+        if (dividend.compareMagnitude(divisor) < 0)
+        {
+            number = "0";
+            isNegative = false;
+
+            return *this;
+        }
+
+        BigInt quotient(0);
+        BigInt current(0);
+
+        for (size_t i = 0; i < dividend.number.size(); i++)
+        {
+            current.number += dividend.number[i];
+            current.removeLeadingZeros();
+
+            int digit = 0;
+
+            while (current.compareMagnitude(divisor) >= 0)
+            {
+                current -= divisor;
+                digit++;
+            }
+
+            quotient.number += char('0' + digit);
+        }
+
+        quotient.removeLeadingZeros();
+
+        quotient.isNegative = resultNegative;
+
+        if (quotient.number == "0")
+        {
+            quotient.isNegative = false;
+        }
+
+        *this = quotient;
+
         return *this;
     }
 
     BigInt& operator%=(const BigInt& other)
     {
-        // TODO
+        if (other.number == "0")
+        {
+            throw runtime_error("Division by zero");
+        }
+
+        if (number == "0")
+        {
+            return *this;
+        }
+
+        bool originalSign = isNegative;
+
+        BigInt dividend(*this);
+        BigInt divisor(other);
+
+        dividend.isNegative = false;
+        divisor.isNegative = false;
+
+        if (dividend.compareMagnitude(divisor) < 0)
+        {
+            // Magnitude is already the remainder.
+            // Keep the sign of the dividend.
+            isNegative = originalSign;
+
+            removeLeadingZeros();
+
+            return *this;
+        }
+
+        BigInt current(0);
+
+        for (size_t i = 0; i < dividend.number.size(); i++)
+        {
+            current.number += dividend.number[i];
+            current.removeLeadingZeros();
+
+            while (current.compareMagnitude(divisor) >= 0)
+            {
+                current -= divisor;
+            }
+        }
+
+        current.removeLeadingZeros();
+
+        current.isNegative = originalSign;
+
+        if (current.number == "0")
+        {
+            current.isNegative = false;
+        }
+
+        *this = current;
+
         return *this;
     }
 
@@ -461,45 +602,64 @@ public:
 
     BigInt& operator++()
     {
-        // TODO
+        *this += BigInt(1);
+
         return *this;
     }
 
     BigInt operator++(int)
     {
-        BigInt temp;
-        // TODO
+        BigInt temp = *this;
+
+        ++(*this);
+
         return temp;
     }
 
     BigInt& operator--()
     {
-        // TODO
+        *this -= BigInt(1);
+
         return *this;
     }
 
     BigInt operator--(int)
     {
-        BigInt temp;
-        // TODO
+        BigInt temp = *this;
+
+        --(*this);
+
         return temp;
     }
 
     string toString() const
     {
-        // TODO
-        return "";
+        if (isNegative && number != "0")
+        {
+            return "-" + number;
+        }
+
+        return number;
     }
 
     friend ostream& operator<<(ostream& os, const BigInt& num)
     {
-        // TODO
+        os << num.toString();
+
         return os;
     }
 
     friend istream& operator>>(istream& is, BigInt& num)
     {
-        // TODO
+        string token;
+
+        if (is >> token)
+        {
+            BigInt temp(token);
+
+            num = temp;
+        }
+
         return is;
     }
 
@@ -507,27 +667,23 @@ public:
     friend bool operator<(const BigInt& lhs, const BigInt& rhs);
 };
 
-
 // =====================================================
 // STORY 3 — Addition & Subtraction
 // =====================================================
 
 BigInt operator+(BigInt lhs, const BigInt& rhs)
 {
-    BigInt result;
     lhs += rhs;
-    result = lhs;
-    return result;
+
+    return lhs;
 }
 
 BigInt operator-(BigInt lhs, const BigInt& rhs)
 {
-    BigInt result;
     lhs -= rhs;
-    result = lhs;
-    return result;
-}
 
+    return lhs;
+}
 
 // =====================================================
 // STORY 4 — Multiplication
@@ -536,9 +692,9 @@ BigInt operator-(BigInt lhs, const BigInt& rhs)
 BigInt operator*(BigInt lhs, const BigInt& rhs)
 {
     lhs *= rhs;
+
     return lhs;
 }
-
 
 // =====================================================
 // STORY 5 — Division & Modulus
@@ -546,18 +702,17 @@ BigInt operator*(BigInt lhs, const BigInt& rhs)
 
 BigInt operator/(BigInt lhs, const BigInt& rhs)
 {
-    BigInt result;
-    // TODO
-    return result;
+    lhs /= rhs;
+
+    return lhs;
 }
 
 BigInt operator%(BigInt lhs, const BigInt& rhs)
 {
-    BigInt result;
-    // TODO
-    return result;
-}
+    lhs %= rhs;
 
+    return lhs;
+}
 
 // =====================================================
 // STORY 2 — Unary & Comparison
@@ -565,43 +720,161 @@ BigInt operator%(BigInt lhs, const BigInt& rhs)
 
 bool operator==(const BigInt& lhs, const BigInt& rhs)
 {
-    // TODO
-    return false;
+    if (lhs.isNegative != rhs.isNegative)
+    {
+        return false;
+    }
+
+    return lhs.number == rhs.number;
 }
 
 bool operator!=(const BigInt& lhs, const BigInt& rhs)
 {
-    // TODO
-    return false;
+    return !(lhs == rhs);
 }
 
 bool operator<(const BigInt& lhs, const BigInt& rhs)
 {
-    // TODO
-    return false;
+    // Negative < Positive
+    if (lhs.isNegative && !rhs.isNegative)
+    {
+        return true;
+    }
+
+    // Positive > Negative
+    if (!lhs.isNegative && rhs.isNegative)
+    {
+        return false;
+    }
+
+    // Both positive
+    if (!lhs.isNegative && !rhs.isNegative)
+    {
+        return lhs.compareMagnitude(rhs) < 0;
+    }
+
+    // Both negative:
+    // Larger magnitude means smaller value.
+    return lhs.compareMagnitude(rhs) > 0;
 }
 
 bool operator<=(const BigInt& lhs, const BigInt& rhs)
 {
-    // TODO
-    return false;
+    return (lhs < rhs) || (lhs == rhs);
 }
 
 bool operator>(const BigInt& lhs, const BigInt& rhs)
 {
-    // TODO
-    return false;
+    return !(lhs <= rhs);
 }
 
 bool operator>=(const BigInt& lhs, const BigInt& rhs)
 {
-    // TODO
-    return false;
+    return !(lhs < rhs);
 }
 
+// =====================================================
+// MAIN — SRS TESTS
+// =====================================================
 
 int main()
 {
-    // Tests
+    // =====================================================
+    // TEST 1 — Constructors and Output
+    // =====================================================
+
+    BigInt a(12345);
+    BigInt b("-67890");
+    BigInt c(0);
+    BigInt d(a);
+
+    cout << "a (from int): " << a << endl;
+    cout << "b (from string): " << b << endl;
+    cout << "c (zero): " << c << endl;
+    cout << "d (copy of a): " << d << endl;
+
+    cout << endl;
+
+    // =====================================================
+    // TEST 2 — Arithmetic Operations
+    // =====================================================
+
+    cout << "a + b = " << a + b << endl;
+    cout << "a - b = " << a - b << endl;
+    cout << "a * b = " << a * b << endl;
+    cout << "b / a = " << b / a << endl;
+    cout << "a % 100 = " << a % BigInt(100) << endl;
+
+    cout << endl;
+
+    // =====================================================
+    // TEST 3 — Relational Operators
+    // =====================================================
+
+    cout << "a == d: " << (a == d) << endl;
+    cout << "a != b: " << (a != b) << endl;
+    cout << "a < b: " << (a < b) << endl;
+    cout << "a > b: " << (a > b) << endl;
+    cout << "c == 0: " << (c == BigInt(0)) << endl;
+
+    cout << endl;
+
+    // =====================================================
+    // TEST 4 — Unary and Increment/Decrement
+    // =====================================================
+
+    cout << "-a: " << -a << endl;
+
+    ++a;
+    cout << "++a: " << a << endl;
+
+    cout << "a--: " << a-- << endl;
+    cout << "a after decrement: " << a << endl;
+
+    cout << endl;
+
+    // =====================================================
+    // TEST 5 — Large Number Operations
+    // =====================================================
+    BigInt large1("12345678901234567890");
+    BigInt large2("98765432109876543210");
+
+    cout << "Very large addition: "
+        << large1 + large2 << endl;
+
+    cout << "Very large multiplication: "
+        << large1 * large2 << endl;
+
+    cout << endl;
+
+    // =====================================================
+    // TEST 6 — Edge Cases
+    // =====================================================
+
+    try
+    {
+        BigInt x(10);
+        BigInt zero(0);
+
+        cout << x / zero << endl;
+    }
+    catch (const runtime_error& e)
+    {
+        cout << "Division by zero correctly threw error: "
+            << e.what() << endl;
+    }
+
+    cout << "Multiplication by zero: "
+        << BigInt(123456) * BigInt(0) << endl;
+
+    cout << "Negative multiplication: "
+        << BigInt(-3) * BigInt(5) << endl;
+
+    cout << "Negative division: "
+        << BigInt(-10) / BigInt(3) << endl;
+
+    cout << "Negative modulus: "
+        << BigInt(-10) % BigInt(3) << endl;
+
     return 0;
 }
