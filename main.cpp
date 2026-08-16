@@ -128,14 +128,22 @@ public:
     BigInt operator-() const
     {
         BigInt result;
-        // TODO
+          result.number = this->number;
+    result.isNegative = this->isNegative;
+
+    // Zero should never be negative
+    if (result.number != "0")
+    {
+        result.isNegative = !result.isNegative;
+    }
         return result;
     }
 
     BigInt operator+() const
     {
         BigInt result;
-        // TODO
+        result.number = this->number;
+    result.isNegative = this->isNegative;
         return result;
     }
 
