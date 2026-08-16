@@ -327,49 +327,54 @@ public:
     // STORY 6 — Increment, Decrement & I/O
     // =====================================================
 
+
     BigInt& operator++() {
-        // TODO
+        *this += BigInt(1);
         return *this;
     }
 
     BigInt operator++(int) {
-        BigInt temp;
-        // TODO
-        return temp;
+        BigInt temp = *this;
+        ++(*this);           
+        return temp;         
     }
 
     BigInt& operator--() {
-        // TODO
+        *this -= BigInt(1);
         return *this;
     }
 
     BigInt operator--(int) {
-        BigInt temp;
-        // TODO
-        return temp;
+        BigInt temp = *this; 
+        --(*this);           
+        return temp;         
     }
 
     string toString() const {
-        // TODO
-        return "";
+        // Prevent "-0" from being produced
+        if (isNegative && number != "0") {
+            return "-" + number;
+        }
+        return number;
     }
 
     friend ostream& operator<<(ostream& os, const BigInt& num) {
-        // TODO
+        os << num.toString();
         return os;
     }
 
     friend istream& operator>>(istream& is, BigInt& num) {
-        // TODO
+        string token;
+        if (is >> token) {
+            
+            BigInt temp(token);
+            num = temp;
+        }
         return is;
     }
 
-    friend bool operator==(const BigInt& lhs, const BigInt& rhs);
-    friend bool operator<(const BigInt& lhs, const BigInt& rhs);
-};
 
 
-// =====================================================
 // STORY 3 — Addition & Subtraction
 // =====================================================
 
