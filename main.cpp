@@ -1,3 +1,8 @@
+#include <iostream>
+#include <string>
+#include<cstdint>
+using namespace std;
+
 // =====================================================
 // STORY 1 — Core & Constructors
 // =====================================================
@@ -6,40 +11,82 @@ class BigInt {
     string number;
     bool isNegative;
 
-    void removeLeadingZeros() {
-        // TODO
+   void removeLeadingZeros() {
+    size_t count = 0;
+    while (count < number.size() && number[count] == '0') {
+        count++;
     }
+    number.erase(0, count);
+    
+    if (number.empty()) {
+        number = "0";
+    }
+    
+    if (number == "0") {
+        isNegative = false;
+    }
+}
 
     int compareMagnitude(const BigInt& other) const {
-        // TODO
-        return 0;
+    if (number.size() > other.number.size()) {
+        return 1;
     }
+    if (number.size() < other.number.size()) {
+        return -1;
+    }
+    if (number > other.number) {
+        return 1;
+    }
+    if (number < other.number) {
+        return -1;
+    }
+    return 0;
+}
 
 public:
     BigInt() {
-        // TODO
+        number="0";
+        isNegative=false;
     }
 
-    BigInt(int64_t value) {
-        // TODO
+   BigInt(int64_t value) {
+    if (value < 0) {
+        isNegative = true;
+        number = to_string(value * -1);
+    } else {
+        isNegative = false;
+        number = to_string(value);
     }
+}
 
     BigInt(const string& str) {
-        // TODO
+    if (str[0] == '-') {
+        isNegative = true;
+        number = str.substr(1);
+    } else {
+        isNegative = false;
+        number = str;
     }
+    removeLeadingZeros();
+}
 
-    BigInt(const BigInt& other) {
-        // TODO
-    }
+   BigInt(const BigInt& other) {
+    number = other.number;
+    isNegative = other.isNegative;
+}
 
     ~BigInt() {
-        // TODO
+        
     }
 
-    BigInt& operator=(const BigInt& other) {
-        // TODO
-        return *this;
-    }
+   BigInt& operator=(const BigInt& other) {
+    if (this == &other) return *this;
+    
+    number = other.number;
+    isNegative = other.isNegative;
+    
+    return *this;
+}
 
 
     // =====================================================
